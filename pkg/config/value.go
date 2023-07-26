@@ -1,4 +1,4 @@
-package factor3
+package config
 
 //go:generate stringer -type=ValueType
 //go:generate jsonenums -type=ValueType

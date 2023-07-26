@@ -1,4 +1,4 @@
-package factor3
+package config
 
 const (
 	DefaultFilePath = "config.yaml"

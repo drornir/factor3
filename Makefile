@@ -4,13 +4,27 @@ BINARY=factor3
 
 default: help
 
+
+##@ General
+
+# The help target prints out all targets with their descriptions organized
+# beneath their categories. The categories are represented by '##@' and the
+# target descriptions by '##'. The awk commands is responsible for reading the
+# entire set of makefiles included in this invocation, looking for lines of the
+# file as xyz: ## something, and then pretty-format the target and help. Then,
+# if there's a line with ##@ something, that gets pretty-printed as a category.
+# More info on the usage of ANSI control characters for terminal formatting:
+# https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters
+# More info on the awk command:
+# http://linuxcommand.org/lc3_adv_awk.php
+
 .PHONY: help
-help: # Show help for each of the Makefile recipes.
-	@grep -E '^[a-zA-Z0-9 -]+:.*#'  Makefile | while read -r l; do printf "\033[1;32m$$(echo $$l | cut -f 1 -d':')\033[00m:$$(echo $$l | cut -f 2- -d'#')\n"; done
+help: ## Show help for each of the Makefile recipes.
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<command>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 
 .PHONY: test
-test: build # Run tests
+test: build ## Run tests
 	go test ./...
 	go run ./example/app/
 
@@ -20,7 +34,7 @@ lint:
 	go vet ./...
 
 .PHONY: setup
-setup: setup-tools # Setup tools required for local development.
+setup: setup-tools ## Setup tools required for local development.
 	mkdir -p bin
 	go mod download
 
@@ -30,9 +44,12 @@ setup-tools:
 	go install golang.org/x/tools/cmd/stringer@latest
 	go install github.com/campoy/jsonenums@latest
 
+.PHONY: gen 
+gen: ## run go generate
+	go generate ./...
+
 .PHONY: build 
-build: # Build the binary.
-	go generate ./..
+build: gen ## Build the binary.
 	go get ./...
 	go mod tidy
 	go build -o bin/${BINARY}
