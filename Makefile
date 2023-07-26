@@ -26,7 +26,7 @@ help: ## Show help for each of the Makefile recipes.
 .PHONY: test
 test: build ## Run tests
 	go test ./...
-	go run ./example/app/
+	# go run ./example/app/
 
 .PHONY: lint
 lint:
@@ -34,12 +34,12 @@ lint:
 	go vet ./...
 
 .PHONY: setup
-setup: setup-tools ## Setup tools required for local development.
+setup: setup-tools ## setup dev env
 	mkdir -p bin
 	go mod download
 
 .PHONY: setup-tools
-setup-tools:
+setup-tools: ## install dev deps 
 	go install github.com/pquerna/ffjson@latest
 	go install golang.org/x/tools/cmd/stringer@latest
 	go install github.com/campoy/jsonenums@latest
@@ -49,7 +49,7 @@ gen: ## run go generate
 	go generate ./...
 
 .PHONY: build 
-build: gen ## Build the binary.
+build: gen ## full build including generate, go get
 	go get ./...
 	go mod tidy
-	go build -o bin/${BINARY}
+	go build -o bin/${BINARY} ./cmd
