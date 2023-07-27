@@ -3,20 +3,16 @@ package config
 import "fmt"
 
 type EnvSchema struct {
-	Usage EnvUsage
+	Usage map[string]string
 }
 
-type EnvUsage struct {
-	shell map[string]string
-}
-
-func (eu EnvUsage) Shell() string {
-	if len(eu.shell) == 0 {
+func (eu EnvSchema) ShellUsage() string {
+	if len(eu.Usage) == 0 {
 		return ""
 	}
 
 	var usage []byte
-	for k, v := range eu.shell {
+	for k, v := range eu.Usage {
 		usage = append(usage, []byte(fmt.Sprintf("%s=%s\n", k, v))...)
 	}
 

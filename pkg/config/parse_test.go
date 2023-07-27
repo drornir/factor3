@@ -16,10 +16,11 @@ func ExampleParseString() {
 
 	conf, err := config.ParseString(configExample)
 	if err != nil {
+		fmt.Println(err)
 		return // handle
 	}
 
-	usage := conf.Schema.Env.Usage.Shell()
+	usage := conf.Schema.Env.ShellUsage()
 	fmt.Print(usage)
 	// Output:
 	// USERNAME=<string>
@@ -38,10 +39,11 @@ func ExampleParseString_nested() {
 
 	conf, err := config.ParseString(configExample)
 	if err != nil {
+		fmt.Println(err)
 		return // handle
 	}
 
-	usage := conf.Schema.Env.Usage.Shell()
+	usage := conf.Schema.Env.ShellUsage()
 	fmt.Print(usage)
 	// Output:
 	// GITHUB_USERNAME=<string>
