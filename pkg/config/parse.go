@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+type JSONPath = []string
+
 type Schema struct {
 	Fields []FieldSchema
 
@@ -12,12 +14,9 @@ type Schema struct {
 }
 
 type FieldSchema struct {
-	Key   KeySchema
-	Value ValueSchema
-}
-
-type KeySchema struct {
-	JSONPath []string
+	TypeName string
+	Key      JSONPath
+	Value    ValueSchema
 }
 
 type ValueSchema struct {
@@ -32,7 +31,7 @@ func ParseString(configStruct string) (Config, error) {
 
 	fieldSchemas, err := FieldSchemasFromAST(ast)
 	if err != nil {
-		return Config{}, fmt.Errorf(": %w", err)
+		return Config{}, fmt.Errorf("parsing config struct: %w", err)
 	}
 
 	envSchema := EnvSchemaFromFieldSchema(fieldSchemas)
@@ -49,17 +48,15 @@ func ParseString(configStruct string) (Config, error) {
 func FieldSchemasFromAST(tree AST) ([]FieldSchema, error) {
 	mock := []FieldSchema{
 		{
-			Key: KeySchema{
-				JSONPath: []string{"Username"},
-			},
+			TypeName: "Config",
+			Key:      JSONPath{"Username"},
 			Value: ValueSchema{
 				Type: ValueTypeString,
 			},
 		},
 		{
-			Key: KeySchema{
-				JSONPath: []string{"Password"},
-			},
+			TypeName: "Config",
+			Key:      JSONPath{"Password"},
 			Value: ValueSchema{
 				Type: ValueTypeString,
 			},
@@ -73,7 +70,7 @@ func EnvSchemaFromFieldSchema(fields []FieldSchema) EnvSchema {
 	usage := make(map[string]string, len(fields))
 
 	for _, field := range fields {
-		k := strings.Join(field.Key.JSONPath, "_")
+		k := strings.Join(field.Key, "_")
 		k = strings.ToUpper(k)
 
 		v := field.Value.Type.String()

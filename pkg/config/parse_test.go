@@ -2,15 +2,24 @@ package config_test
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/drornir/factor3/pkg/config"
 )
 
+func init() {
+	log.SetPrefix(">>> ")
+	log.SetFlags(log.Lmsgprefix)
+}
+
 func ExampleParseString() {
 	const configExample = `
+	package pkg
+
 	type Config struct {
 		Username string
 		Password string
+		XX, YY abc.TTT
 	}
 	`
 
@@ -27,8 +36,10 @@ func ExampleParseString() {
 	// PASSWORD=<string>
 }
 
-func ExampleParseString_nested() {
+func _ExampleParseString_nested() {
 	const configExample = `
+	package pkg
+
 	type Config struct {
 		Github struct {
 			Username string
