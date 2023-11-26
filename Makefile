@@ -49,7 +49,7 @@ gen: ## run go generate
 	go generate ./...
 
 .PHONY: build 
-build: gen ## full build including generate, go get
+build: ## full build including generate, go get
 	go get ./...
 	go mod tidy
 	go build -o bin/${BINARY} ./cmd
