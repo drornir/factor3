@@ -160,7 +160,6 @@ func (v *annotationsVisitor) Visit(node ast.Node) ast.Visitor {
 	if node == nil {
 		return nil
 	}
-	log.Printf("visit: %T", node)
 
 	switch n := node.(type) {
 	case *ast.GenDecl:
@@ -173,7 +172,6 @@ func (v *annotationsVisitor) Visit(node ast.Node) ast.Visitor {
 	case *ast.TypeSpec:
 		var annotations []string
 		for _, line := range v.lastDoc {
-			log.Printf("doc line: %q", line.Text)
 			if strings.HasPrefix(line.Text, FACTOR3_ANNOTATION_PREFIX) {
 				annotations = append(annotations, line.Text)
 			}
