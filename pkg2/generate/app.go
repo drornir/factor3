@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -30,8 +29,6 @@ func New(workDir string) (*App, error) {
 		return nil, wrapErr(err)
 	}
 
-	log.Printf("loaded %d pkgs", len(pkgs))
-
 	return &App{
 		workDir: workDir,
 		pkgs:    pkgs,
@@ -54,8 +51,6 @@ func (a *App) Generate() error {
 func (a *App) generatePackage(pkgID string) error {
 	unparsedTypes := a.getAnnotatedTypes(pkgID)
 
-	log.Printf("unparsed types #%d", len(unparsedTypes))
-
 	for _, ut := range unparsedTypes {
 		t, err := a.parseType(ut)
 		if err != nil {
@@ -69,10 +64,10 @@ func (a *App) generatePackage(pkgID string) error {
 
 		// TODO write to file
 		fmt.Printf("Generated Code for %q (pkg=%q)\n", t.name, pkgID)
-		fmt.Println(code)
+		fmt.Println(string(code))
 
 		filename := fmt.Sprintf("zz_factor3_%s.go", strings.ToLower(t.name))
-		if err := os.WriteFile(filename, []byte(code), 0644); err != nil {
+		if err := os.WriteFile(filename, code, 0644); err != nil {
 			return fmt.Errorf("writing file %q in package %q: %w", filename, pkgID, err)
 		}
 	}
@@ -89,16 +84,51 @@ func (a *App) parseType(ut *UnparsedType) (Type, error) {
 	ti := a.pkgs[ut.pkgID].TypesInfo.Types[ut.astTypeSpec.Type]
 	switch uti := ti.Type.Underlying().(type) {
 	case *types.Struct:
+		var fieldAnnotations []string
 		for i := 0; i < uti.NumFields(); i++ {
 			field := uti.Field(i)
 			if !field.Exported() {
 				continue
 			}
 
+			ast.Inspect(ut.astTypeSpec, func(node ast.Node) bool {
+				if node == nil {
+					return true
+				}
+
+				switch n := node.(type) {
+				case *ast.Field:
+					if n.Doc == nil {
+						return true
+					}
+
+					var found bool
+					for _, nameIdent := range n.Names {
+						if nameIdent.Name == field.Name() {
+							found = true
+							break
+						}
+					}
+					if !found {
+						return true
+					}
+					for _, c := range n.Doc.List {
+						trimmed := strings.TrimSpace(c.Text)
+						if strings.HasPrefix(trimmed, FACTOR3_ANNOTATION_PREFIX) {
+							fieldAnnotations = append(fieldAnnotations, trimmed)
+						}
+					}
+					return false
+				default:
+					return true
+				}
+			})
+
 			outField := Field{
-				parent: &t,
-				name:   field.Name(),
-				typ:    field.Type().Underlying(),
+				parent:      &t,
+				name:        field.Name(),
+				typ:         field.Type().Underlying(),
+				annotations: fieldAnnotations,
 			}
 
 			t.fields = append(t.fields, outField)
@@ -110,33 +140,8 @@ func (a *App) parseType(ut *UnparsedType) (Type, error) {
 	return t, nil
 }
 
-func (a *App) generateCode(t Type) (string, error) {
-	fieldsCode := ""
-	for _, f := range t.fields {
-		fieldsCode += fmt.Sprintf(`fmt.Printf("\t-%s (%s)\n")`+"\n", f.name, f.typ.String())
-	}
-
-	funcCode := fmt.Sprintf(`func (s *%[1]s) Factor3Load() error {
-		fmt.Printf("type name: %%s\n", "%[1]s")
-		fmt.Printf("annotations: %[2]s\n")
-		fmt.Printf("fields:\n")
-		%[3]s
-		return nil
-	}
-	`,
-		t.name, t.annotations, fieldsCode)
-
-	final := fmt.Sprintf(`package %[1]s
-
-	import (
-		"fmt"
-	)
-
-	%[2]s
-	`, t.pkgName, funcCode,
-	)
-
-	return final, nil
+func (a *App) generateCode(t Type) ([]byte, error) {
+	return GenerateFileForType(t)
 }
 
 func (a *App) getAnnotatedTypes(pkgID string) map[string]*UnparsedType {

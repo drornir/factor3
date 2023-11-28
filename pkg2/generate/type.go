@@ -21,7 +21,8 @@ type Type struct {
 }
 
 type Field struct {
-	parent *Type
-	name   string
-	typ    types.Type
+	parent      *Type
+	name        string
+	typ         types.Type
+	annotations []string
 }

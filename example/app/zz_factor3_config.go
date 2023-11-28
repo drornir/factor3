@@ -1,3 +1,4 @@
+// GENERATED FILE DO NOT EDIT
 package main
 
 import (
@@ -5,11 +6,15 @@ import (
 )
 
 func (s *Config) Factor3Load() error {
-	fmt.Printf("type name: %s\n", "Config")
-	fmt.Printf("annotations: [//factor3:generate]\n")
+	fmt.Printf("type name: Config\n")
+	fmt.Printf("annotations: //factor3:generate,\n")
 	fmt.Printf("fields:\n")
-	fmt.Printf("\t-Port (string)\n")
-	fmt.Printf("\t-DBConnection (string)\n")
+
+	fmt.Printf("\t-name=Port, type=string\n")
+	fmt.Printf("\t-annotations: //factor3:validate opts...,\n")
+
+	fmt.Printf("\t-name=DBConnection, type=string\n")
+	fmt.Printf("\t-annotations: //factor3:validate opts...,\n")
 
 	return nil
 }

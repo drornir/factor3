@@ -8,6 +8,7 @@ import (
 
 //factor3:generate
 type Config struct {
+	//factor3:validate opts...
 	Port         string
 	DBConnection string
 }
