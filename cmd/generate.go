@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/drornir/factor3/pkg2/generate"
+	"github.com/drornir/factor3/pkg/generate"
 )
 
 var generateCmd = &cobra.Command{
