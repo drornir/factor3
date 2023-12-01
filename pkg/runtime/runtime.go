@@ -4,6 +4,6 @@ type Interface interface {
 	Factor3Load() error
 }
 
-func Load(config Interface) error {
-	return config.Factor3Load()
+func Load(loadable Interface) error {
+	return loadable.Factor3Load()
 }

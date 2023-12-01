@@ -6,11 +6,13 @@ import (
 	factor3 "github.com/drornir/factor3/pkg/runtime"
 )
 
-//factor3:generate
+//factor3:generate --filename ./example/app/config.yaml
 type Config struct {
 	//factor3:validate regex "^[0-9]+$"
 	Port         string
 	DBConnection string
+	SomeNumber   int
+	SomeFlag     bool
 }
 
 func main() {

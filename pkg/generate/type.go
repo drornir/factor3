@@ -14,6 +14,7 @@ type UnparsedType struct {
 }
 
 type Type struct {
+	config      Config
 	pkgName     string
 	name        string
 	annotations []string
@@ -25,4 +26,9 @@ type Field struct {
 	name        string
 	typ         types.Type
 	annotations []string
+}
+
+type Config struct {
+	ConfigFileName string
+	EnvPrefix      string
 }

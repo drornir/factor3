@@ -38,11 +38,7 @@ func New(workDir string) (*App, error) {
 func (a *App) Generate() error {
 	for pkgID := range a.pkgs {
 		if err := a.generatePackage(pkgID); err != nil {
-			return fmt.Errorf("generating code: %w", err)
-		}
-		fmt.Println(a.workDir)
-		if err := exec.Command("go", "fmt", a.workDir).Run(); err != nil {
-			return fmt.Errorf("format: %w", err)
+			return fmt.Errorf("generating code (package %q): %w", pkgID, err)
 		}
 	}
 	return nil
@@ -51,6 +47,7 @@ func (a *App) Generate() error {
 func (a *App) generatePackage(pkgID string) error {
 	unparsedTypes := a.getAnnotatedTypes(pkgID)
 
+	allCode := make(map[string]string)
 	for _, ut := range unparsedTypes {
 		t, err := a.parseType(ut)
 		if err != nil {
@@ -59,17 +56,27 @@ func (a *App) generatePackage(pkgID string) error {
 
 		code, err := a.generateCode(t)
 		if err != nil {
-			return fmt.Errorf("generating in package %q: %w", pkgID, err)
+			return fmt.Errorf("generating code for type %q: %w", t.name, err)
 		}
+		for k, v := range code {
+			allCode[k] = v
+		}
+	}
 
-		// TODO write to file
-		fmt.Printf("Generated Code for %q (pkg=%q)\n", t.name, pkgID)
-		fmt.Println(string(code))
+	for filename, content := range allCode {
+		fmt.Printf("Generated Code for %q (pkg=%q)\n", filename, pkgID)
+		fmt.Println(string(content))
 
-		filename := fmt.Sprintf("zz_factor3_%s.go", strings.ToLower(t.name))
-		if err := os.WriteFile(filename, code, 0644); err != nil {
+		if err := os.WriteFile(filename, []byte(content), 0644); err != nil {
 			return fmt.Errorf("writing file %q in package %q: %w", filename, pkgID, err)
 		}
+	}
+
+	if err := exec.Command("go", "fmt", a.workDir).Run(); err != nil {
+		return fmt.Errorf("'go fmt' error: %w", err)
+	}
+	if err := exec.Command("go", "get", a.workDir).Run(); err != nil {
+		return fmt.Errorf("'go get' error: %w", err)
 	}
 
 	return nil
@@ -137,11 +144,25 @@ func (a *App) parseType(ut *UnparsedType) (Type, error) {
 		return t, fmt.Errorf("parsing type: only struct types are supported for generation: got %q", uti.String())
 	}
 
+	var genAnnotation string
+	prefix := FACTOR3_ANNOTATION_PREFIX + "generate "
+	for _, a := range t.annotations {
+		if strings.HasPrefix(a, prefix) {
+			genAnnotation = strings.TrimPrefix(a, prefix)
+			break
+		}
+	}
+
+	c, _ := parseConfig(genAnnotation) // ignoring error since the empty config is a good handling
+	t.config = c
+
+	// fmt.Println("##########filename", c.ConfigFileName)
+
 	return t, nil
 }
 
-func (a *App) generateCode(t Type) ([]byte, error) {
-	return GenerateFileForType(t)
+func (a *App) generateCode(t Type) (map[string]string, error) {
+	return GenerateFilesForType(t)
 }
 
 func (a *App) getAnnotatedTypes(pkgID string) map[string]*UnparsedType {
@@ -150,6 +171,22 @@ func (a *App) getAnnotatedTypes(pkgID string) map[string]*UnparsedType {
 	for _, f := range a.pkgs[pkgID].Syntax {
 		ast.Walk(visitor, f)
 	}
+
+	// filter unannotated types
+	for key, result := range results {
+		var found bool
+		for _, a := range result.annotations {
+			if strings.HasPrefix(a, FACTOR3_ANNOTATION_PREFIX) {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			delete(results, key)
+		}
+	}
+
 	return results
 }
 
@@ -167,11 +204,17 @@ func (v *annotationsVisitor) Visit(node ast.Node) ast.Visitor {
 	}
 
 	switch n := node.(type) {
+	case *ast.FuncDecl:
+		return nil
 	case *ast.GenDecl:
 		if n.Tok != token.TYPE {
 			return nil
 		}
-		v.lastDoc = n.Doc.List
+		if n.Doc != nil {
+			v.lastDoc = n.Doc.List
+		} else {
+			v.lastDoc = nil
+		}
 		return v
 
 	case *ast.TypeSpec:
@@ -195,9 +238,8 @@ func (v *annotationsVisitor) Visit(node ast.Node) ast.Visitor {
 			object:      object,
 			astTypeSpec: n,
 		}
+		return nil
 	default:
 		return v
 	}
-
-	return nil
 }
