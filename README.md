@@ -53,7 +53,7 @@ func main() {
 	if err := factor3.Load(&c, os.Args[1:]); err != nil {
 		log.Fatal(err)
 	}
-  // ... c is ready
+	// ... c is ready
 }
 ```
 
