@@ -31,7 +31,7 @@ package main
 //go:generate ../../bin/factor3 generate
 
 import (
-  "log"
+	"log"
 	"os"
 
 	factor3 "github.com/drornir/factor3/pkg/runtime"
