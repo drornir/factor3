@@ -1,9 +1,9 @@
 package runtime
 
 type Interface interface {
-	Factor3Load() error
+	Factor3Load(argv []string) error
 }
 
-func Load(loadable Interface) error {
-	return loadable.Factor3Load()
+func Load(loadable Interface, argv []string) error {
+	return loadable.Factor3Load(argv)
 }

@@ -7,6 +7,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
+	"github.com/mattn/go-shellwords"
 )
 
 type generateFilesTemplateModel struct {
@@ -23,6 +24,7 @@ type fieldModel struct {
 	Name        string
 	Type        string
 	Annotations []string
+	Doc         string
 }
 type configModel struct {
 	ConfigFileName string
@@ -58,6 +60,7 @@ var generateUtilsFileTemplate = template.Must(
 var generateTypeFileTemplate = template.Must(
 	template.New("type-file").
 		Funcs(sprig.TxtFuncMap()).
+		Funcs(template.FuncMap{"shellwords": shellwords.Parse}).
 		Parse(`// GENERATED FILE DO NOT EDIT
 		package {{ .PackageName }}
 
@@ -69,6 +72,7 @@ var generateTypeFileTemplate = template.Must(
 			"os"
 			
 			"gopkg.in/yaml.v3"
+			"github.com/spf13/pflag"
 		)
 
 		var _ = strconv.ParseInt // just in case strconv is not used
@@ -78,7 +82,7 @@ var generateTypeFileTemplate = template.Must(
 
 var generateTypeLoadFuncTemplate = template.Must(
 	generateTypeFileTemplate.New("load-func").
-		Parse(`func (self *{{ .Name }}) Factor3Load() error {
+		Parse(`func (self *{{ .Name }}) Factor3Load(argv []string) error {
 	
 	fmt.Printf("type name: {{ .Name }}\n")
 	fmt.Printf("annotations: {{range $a := .Annotations }}{{ $a | replace "\"" "\\\"" }},{{ end }}\n")
@@ -94,12 +98,16 @@ var generateTypeLoadFuncTemplate = template.Must(
 
 	{{ template "json_dec" . }}
 	{{ template "env_dec" . }}
+	{{ template "flag_dec" . }}
 
 	if err := loadConfigFile(conf.Filename); err != nil {
 		return fmt.Errorf("loading config from file %q: %w", conf.Filename, err)
 	}
 	if err := loadEnv(conf.EnvPrefix); err != nil {
 		return fmt.Errorf("loading config from env: %w", err)
+	}
+	if err := parseFlags(argv); err != nil {
+		return fmt.Errorf("loading config from pflags: %w", err)
 	}
 	
 	return nil
@@ -213,6 +221,30 @@ var _ = template.Must(
 	}
 		`),
 )
+var _ = template.Must(
+	generateTypeLoadFuncTemplate.New("flag_dec").
+		Parse(fmt.Sprintf(`
+	parseFlags := func(argv []string) error {
+		if len(argv) == 0 {
+			return nil
+		}
+		fset := pflag.NewFlagSet("{{ .Name }}", pflag.ContinueOnError)
+		{{ range $f := .Fields -}}
+			{{- range $a := $f.Annotations -}}
+				{{- if $a | hasPrefix "%[1]spflag" -}}
+				{{- $args := shellwords (trimPrefix "%[1]spflag" $a) -}}
+				fset.{{ $f.Type | title }}VarP(&self.{{ $f.Name }}, "{{ first $args }}" , "{{ first (rest $args) | default "" }}", self.{{ $f.Name }}, "{{ $f.Doc }}")
+				{{ end -}}
+			{{- end -}}
+		{{- end }}
+		if err := fset.Parse(argv); err != nil {
+			return fmt.Errorf("parsing flags: %%w", err)
+		}
+		return nil
+	}	
+`,
+			FACTOR3_ANNOTATION_PREFIX,
+		)))
 
 func GenerateFilesForType(t Type) (map[string]string, error) {
 	model := generateFilesTemplateModel{
@@ -227,6 +259,7 @@ func GenerateFilesForType(t Type) (map[string]string, error) {
 
 	var fields []fieldModel
 	for _, f := range t.fields {
+		fmt.Println("f.annotations", f.annotations)
 		fields = append(fields, fieldModel{
 			Name:        f.name,
 			Type:        f.typ.String(),
