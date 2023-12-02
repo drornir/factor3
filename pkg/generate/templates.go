@@ -83,17 +83,8 @@ var generateTypeFileTemplate = template.Must(
 var generateTypeLoadFuncTemplate = template.Must(
 	generateTypeFileTemplate.New("load-func").
 		Parse(`func (self *{{ .Name }}) Factor3Load(argv []string) error {
-	
-	fmt.Printf("type name: {{ .Name }}\n")
-	fmt.Printf("annotations: {{range $a := .Annotations }}{{ $a | replace "\"" "\\\"" }},{{ end }}\n")
-	fmt.Printf("fields:\n")
-	{{ range $field := .Fields }}
-		fmt.Printf("\t-name={{ $field.Name }}, type={{ $field.Type }}\n")
-		fmt.Printf("\t-annotations: {{range $a := $field.Annotations }}{{ $a | replace "\"" "\\\"" }},{{ end }}\n")
-	{{ end }}
-
 	conf := zz_factor3_Config{}
-	{{ if ne .Config.ConfigFileName "" }}conf.Filename = "{{ .Config.ConfigFileName | default "config.yaml" }}"{{ end }}
+	{{ if ne .Config.ConfigFileName "" }}conf.Filename = "{{ .Config.ConfigFileName }}"{{ end }}
 	{{ if ne .Config.EnvPrefix "" }}conf.EnvPrefix = "{{ .Config.EnvPrefix }}_"{{ end }}
 
 	{{ template "json_dec" . }}
@@ -122,20 +113,23 @@ var _ = template.Must(
 		{{ $field.Name }} {{ $field.Type }} %[1]cjson:"{{ $field.Name | snakecase }}"%[1]c
 	{{ end -}}
 	}
-
-	var jsoner json.Unmarshaler
-	if x, ok := interface{}(self).(json.Unmarshaler); ok {
-		jsoner = x
-	} else {
-		jsoner = &zz_factor3_JSONer[jsonStruct]{t: (*jsonStruct)(self)}
-	}
 	
 	loadConfigFile := func(filename string) error {
+		type jsonStruct struct {
+			{{- range $field := .Fields -}}
+				{{ $field.Name }} {{ $field.Type }} %[1]cjson:"{{ $field.Name | snakecase }}"%[1]c
+			{{ end -}}
+			}
+		var jsoner json.Unmarshaler
+		if x, ok := interface{}(self).(json.Unmarshaler); ok {
+			jsoner = x
+		} else {
+			jsoner = &zz_factor3_JSONer[jsonStruct]{t: (*jsonStruct)(self)}
+		}
 		file, err := os.ReadFile(filename)
 		if err != nil {
 			return fmt.Errorf("opening file: %%w", err)
 		}
-		fmt.Printf("%%s\n", file)
 
 		fileExt := filename[strings.LastIndex(filename, ".")+1:]
 		switch fileExt {
@@ -162,8 +156,7 @@ var _ = template.Must(
 
 		return nil
 	}
-
-		`,
+`,
 			0x60,
 		)))
 var _ = template.Must(
@@ -172,7 +165,7 @@ var _ = template.Must(
 	loadEnv := func (prefix string) error {
 		var s string
 		{{- range $f := .Fields }}
-			s = os.Getenv(conf.EnvPrefix+"{{ $f.Name | snakecase | upper }}")
+			s = os.Getenv(prefix+"{{ $f.Name | snakecase | upper }}")
 
 			{{- if eq $f.Type "string" }} 
 			if s != "" {
@@ -214,9 +207,6 @@ var _ = template.Must(
 				// {{ $f.Name }}: {{ $f.Type }} is not a valid type
 			{{ end -}}
 		{{- end }}
-
-		fmt.Printf("here is was I got:\n\t%#v\n", *self)
-
 		return nil
 	}
 		`),
@@ -259,7 +249,6 @@ func GenerateFilesForType(t Type) (map[string]string, error) {
 
 	var fields []fieldModel
 	for _, f := range t.fields {
-		fmt.Println("f.annotations", f.annotations)
 		fields = append(fields, fieldModel{
 			Name:        f.name,
 			Type:        f.typ.String(),

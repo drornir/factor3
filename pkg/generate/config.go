@@ -9,7 +9,7 @@ import (
 
 func parseConfig(args string) (Config, error) {
 	var c Config
-	fset := pflag.NewFlagSet("config", pflag.ContinueOnError)
+	fset := pflag.NewFlagSet("factor3:generate", pflag.ContinueOnError)
 
 	fset.StringVarP(&c.ConfigFileName, "filename", "f", "", "")
 	fset.StringVarP(&c.EnvPrefix, "env-prefix", "e", "", "")

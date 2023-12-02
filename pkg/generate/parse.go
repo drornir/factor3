@@ -9,18 +9,23 @@ import (
 )
 
 const FACTOR3_ANNOTATION_PREFIX = "//factor3:"
+const FACTOR3_ANNOTATION_PREFIX_GENERATE = FACTOR3_ANNOTATION_PREFIX + "generate "
 
 func (a *App) parseType(ut *UnparsedType) (Type, error) {
 	var t Type
 	t.name = ut.name
 	t.pkgName = ut.object.Pkg().Name()
 	t.annotations = ut.annotations
+	t.doc = ut.doc
 
 	ti := a.pkgs[ut.pkgID].TypesInfo.Types[ut.astTypeSpec.Type]
 	switch uti := ti.Type.Underlying().(type) {
 	case *types.Struct:
 		for i := 0; i < uti.NumFields(); i++ {
-			var fieldAnnotations []string
+			var (
+				fieldAnnotations []string
+				fieldDocs        string
+			)
 
 			field := uti.Field(i)
 			if !field.Exported() {
@@ -48,11 +53,14 @@ func (a *App) parseType(ut *UnparsedType) (Type, error) {
 					if !found {
 						return true
 					}
-					for _, c := range n.Doc.List {
-						trimmed := strings.TrimSpace(c.Text)
-						if strings.HasPrefix(trimmed, FACTOR3_ANNOTATION_PREFIX) {
-							fieldAnnotations = append(fieldAnnotations, trimmed)
+					if n.Doc != nil {
+						for _, c := range n.Doc.List {
+							trimmed := strings.TrimSpace(c.Text)
+							if strings.HasPrefix(trimmed, FACTOR3_ANNOTATION_PREFIX) {
+								fieldAnnotations = append(fieldAnnotations, trimmed)
+							}
 						}
+						fieldDocs = n.Doc.Text()
 					}
 					return false
 				default:
@@ -65,6 +73,7 @@ func (a *App) parseType(ut *UnparsedType) (Type, error) {
 				name:        field.Name(),
 				typ:         field.Type().Underlying(),
 				annotations: fieldAnnotations,
+				doc:         fieldDocs,
 			}
 
 			t.fields = append(t.fields, outField)
@@ -74,10 +83,9 @@ func (a *App) parseType(ut *UnparsedType) (Type, error) {
 	}
 
 	var genAnnotation string
-	prefix := FACTOR3_ANNOTATION_PREFIX + "generate "
 	for _, a := range t.annotations {
-		if strings.HasPrefix(a, prefix) {
-			genAnnotation = strings.TrimPrefix(a, prefix)
+		if strings.HasPrefix(a, FACTOR3_ANNOTATION_PREFIX_GENERATE) {
+			genAnnotation = strings.TrimPrefix(a, FACTOR3_ANNOTATION_PREFIX_GENERATE)
 			break
 		}
 	}
@@ -122,7 +130,7 @@ type annotationsVisitor struct {
 	pkgID   string
 	results map[string]*UnparsedType
 
-	lastDoc []*ast.Comment
+	lastDoc *ast.CommentGroup
 }
 
 func (v *annotationsVisitor) Visit(node ast.Node) ast.Visitor {
@@ -137,22 +145,19 @@ func (v *annotationsVisitor) Visit(node ast.Node) ast.Visitor {
 		if n.Tok != token.TYPE {
 			return nil
 		}
-		if n.Doc != nil {
-			v.lastDoc = n.Doc.List
-		} else {
-			v.lastDoc = nil
-		}
+
+		v.lastDoc = n.Doc
 		return v
 
 	case *ast.TypeSpec:
-		fmt.Println("v.lastDoc", v.lastDoc)
 		var annotations []string
-		for _, line := range v.lastDoc {
-			if strings.HasPrefix(line.Text, FACTOR3_ANNOTATION_PREFIX) {
-				annotations = append(annotations, line.Text)
+		if n.Doc != nil {
+			for _, line := range v.lastDoc.List {
+				if strings.HasPrefix(line.Text, FACTOR3_ANNOTATION_PREFIX) {
+					annotations = append(annotations, line.Text)
+				}
 			}
 		}
-		fmt.Println("annotations", annotations)
 
 		pkg := v.app.pkgs[v.pkgID]
 		object := pkg.Types.Scope().Lookup(n.Name.String())
@@ -164,6 +169,7 @@ func (v *annotationsVisitor) Visit(node ast.Node) ast.Visitor {
 			pkgID:       v.pkgID,
 			name:        n.Name.String(),
 			annotations: annotations,
+			doc:         v.lastDoc.Text(),
 			object:      object,
 			astTypeSpec: n,
 		}

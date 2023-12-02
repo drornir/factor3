@@ -15,23 +15,6 @@ import (
 var _ = strconv.ParseInt // just in case strconv is not used
 
 func (self *Config) Factor3Load(argv []string) error {
-
-	fmt.Printf("type name: Config\n")
-	fmt.Printf("annotations: //factor3:generate --filename ./example/app/config.yaml --env-prefix EX,\n")
-	fmt.Printf("fields:\n")
-
-	fmt.Printf("\t-name=DBConnection, type=string\n")
-	fmt.Printf("\t-annotations: \n")
-
-	fmt.Printf("\t-name=Port, type=string\n")
-	fmt.Printf("\t-annotations: //factor3:pflag port,\n")
-
-	fmt.Printf("\t-name=SomeNumber, type=int\n")
-	fmt.Printf("\t-annotations: //factor3:pflag some-number n,\n")
-
-	fmt.Printf("\t-name=SomeFlag, type=bool\n")
-	fmt.Printf("\t-annotations: //factor3:pflag some-flag,\n")
-
 	conf := zz_factor3_Config{}
 	conf.Filename = "./example/app/config.yaml"
 	conf.EnvPrefix = "EX_"
@@ -43,19 +26,23 @@ func (self *Config) Factor3Load(argv []string) error {
 		SomeFlag     bool   `json:"some_flag"`
 	}
 
-	var jsoner json.Unmarshaler
-	if x, ok := interface{}(self).(json.Unmarshaler); ok {
-		jsoner = x
-	} else {
-		jsoner = &zz_factor3_JSONer[jsonStruct]{t: (*jsonStruct)(self)}
-	}
-
 	loadConfigFile := func(filename string) error {
+		type jsonStruct struct {
+			DBConnection string `json:"db_connection"`
+			Port         string `json:"port"`
+			SomeNumber   int    `json:"some_number"`
+			SomeFlag     bool   `json:"some_flag"`
+		}
+		var jsoner json.Unmarshaler
+		if x, ok := interface{}(self).(json.Unmarshaler); ok {
+			jsoner = x
+		} else {
+			jsoner = &zz_factor3_JSONer[jsonStruct]{t: (*jsonStruct)(self)}
+		}
 		file, err := os.ReadFile(filename)
 		if err != nil {
 			return fmt.Errorf("opening file: %w", err)
 		}
-		fmt.Printf("%s\n", file)
 
 		fileExt := filename[strings.LastIndex(filename, ".")+1:]
 		switch fileExt {
@@ -85,15 +72,15 @@ func (self *Config) Factor3Load(argv []string) error {
 
 	loadEnv := func(prefix string) error {
 		var s string
-		s = os.Getenv(conf.EnvPrefix + "DB_CONNECTION")
+		s = os.Getenv(prefix + "DB_CONNECTION")
 		if s != "" {
 			self.DBConnection = s
 		}
-		s = os.Getenv(conf.EnvPrefix + "PORT")
+		s = os.Getenv(prefix + "PORT")
 		if s != "" {
 			self.Port = s
 		}
-		s = os.Getenv(conf.EnvPrefix + "SOME_NUMBER")
+		s = os.Getenv(prefix + "SOME_NUMBER")
 		if s != "" {
 			if n, err := strconv.ParseInt(s, 10, 32); err != nil {
 				return fmt.Errorf("parsing \"SomeNumber\" as \"int\": %w", err)
@@ -101,7 +88,7 @@ func (self *Config) Factor3Load(argv []string) error {
 				self.SomeNumber = int(n)
 			}
 		}
-		s = os.Getenv(conf.EnvPrefix + "SOME_FLAG")
+		s = os.Getenv(prefix + "SOME_FLAG")
 		if s != "" {
 			if b, err := strconv.ParseBool(s); err != nil {
 				return fmt.Errorf("parsing \"SomeFlag\" as \"bool\": %w", err)
@@ -109,9 +96,6 @@ func (self *Config) Factor3Load(argv []string) error {
 				self.SomeFlag = b
 			}
 		}
-
-		fmt.Printf("here is was I got:\n\t%#v\n", *self)
-
 		return nil
 	}
 
