@@ -52,4 +52,4 @@ gen: ## run go generate
 build: ## full build including generate, go get
 	go get ./...
 	go mod tidy
-	go build -o bin/${BINARY} ./cmd
+	go build -o bin/${BINARY} .

@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"context"
@@ -16,7 +16,7 @@ var rootCmd = &cobra.Command{
 func init() {
 }
 
-func main() {
+func Main() {
 	if err := rootCmd.ExecuteContext(context.Background()); err != nil {
 		log.Printf("error: %s\n", err.Error())
 		os.Exit(1)
