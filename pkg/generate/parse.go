@@ -10,6 +10,7 @@ import (
 
 const FACTOR3_ANNOTATION_PREFIX = "//factor3:"
 const FACTOR3_ANNOTATION_PREFIX_GENERATE = FACTOR3_ANNOTATION_PREFIX + "generate "
+const FACTOR3_ANNOTATION_PREFIX_PFLAG = FACTOR3_ANNOTATION_PREFIX + "pflag "
 
 func (a *App) parseType(ut *UnparsedType) (Type, error) {
 	var t Type
@@ -111,7 +112,7 @@ func (a *App) getAnnotatedTypes(pkgID string) map[string]*UnparsedType {
 	for key, result := range results {
 		var found bool
 		for _, a := range result.annotations {
-			if strings.HasPrefix(a, FACTOR3_ANNOTATION_PREFIX) {
+			if strings.HasPrefix(a, FACTOR3_ANNOTATION_PREFIX_GENERATE) {
 				found = true
 				break
 			}
@@ -151,7 +152,7 @@ func (v *annotationsVisitor) Visit(node ast.Node) ast.Visitor {
 
 	case *ast.TypeSpec:
 		var annotations []string
-		if n.Doc != nil {
+		if v.lastDoc != nil {
 			for _, line := range v.lastDoc.List {
 				if strings.HasPrefix(line.Text, FACTOR3_ANNOTATION_PREFIX) {
 					annotations = append(annotations, line.Text)
