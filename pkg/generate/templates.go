@@ -108,12 +108,6 @@ var generateTypeLoadFuncTemplate = template.Must(
 var _ = template.Must(
 	generateTypeLoadFuncTemplate.New("json_dec").
 		Parse(fmt.Sprintf(`
-	type jsonStruct struct {
-	{{- range $field := .Fields -}}
-		{{ $field.Name }} {{ $field.Type }} %[1]cjson:"{{ $field.Name | snakecase }}"%[1]c
-	{{ end -}}
-	}
-	
 	loadConfigFile := func(filename string) error {
 		type jsonStruct struct {
 			{{- range $field := .Fields -}}
