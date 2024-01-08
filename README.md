@@ -28,7 +28,7 @@ The [example](./example/app) looks like this:
 ```go
 package main
 
-//go:generate ../../bin/factor3 generate
+//go:generate factor3 generate
 
 import (
 	"log"
