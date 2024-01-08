@@ -55,13 +55,27 @@ build: ## full build including generate, go get
 	go mod tidy
 	go build -o bin/${BINARY} .
 
+##@ Versions
+
+ifneq ($(findstring -,${VERSION}),)
+	preprelease_flag="--prerelease"
+	v_suffix="$(shell git rev-parse --short HEAD)"
+else
+	preprelease_flag=""
+	v_suffix=""
+endif
+FULL_VERSION=${VERSION}${v_suffix}
+
 .PHONY: publish
 publish: ## Publish a new version to github
-	git tag $(VERSION)
-	git push origin $(VERSION)
-	gh release create $(VERSION)  --prerelease --title $(VERSION) --notes "$(VERSION)"
-	GOPROXY=proxy.golang.org go list -m github.com/drornir/factor3@${VERSION}
+	git tag ${FULL_VERSION}
+	git push origin ${FULL_VERSION}
+	GOPROXY=proxy.golang.org go list -m github.com/drornir/factor3@${FULL_VERSION}
+
+.PHONY: release
+release:
+	gh release create ${FULL_VERSION} ${preprelease_flag} --title ${FULL_VERSION} --notes "${FULL_VERSION}"
 
 .PHONY: version
 version:
-	@echo $(VERSION)
+	@echo ${FULL_VERSION}
