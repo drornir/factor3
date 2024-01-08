@@ -1,6 +1,7 @@
 SHELL:=/bin/zsh
 
 BINARY=factor3
+VERSION=$(strip $(shell cat version.txt))
 
 default: help
 
@@ -53,3 +54,12 @@ build: ## full build including generate, go get
 	go get ./...
 	go mod tidy
 	go build -o bin/${BINARY} .
+
+.PHONY: publish
+publish: ## Publish a new version to github
+	git tag $(VERSION)
+	git push origin $(VERSION)
+
+.PHONY: version
+version:
+	@echo $(VERSION)
