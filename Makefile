@@ -59,6 +59,7 @@ build: ## full build including generate, go get
 publish: ## Publish a new version to github
 	git tag $(VERSION)
 	git push origin $(VERSION)
+	GOPROXY=proxy.golang.org go list -m github.com/drornir/factor3@${VERSION}
 
 .PHONY: version
 version:
