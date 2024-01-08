@@ -70,11 +70,11 @@ FULL_VERSION=${VERSION}${v_suffix}
 publish: ## Publish a new version to github
 	git tag ${FULL_VERSION}
 	git push origin ${FULL_VERSION}
-	GOPROXY=proxy.golang.org go list -m github.com/drornir/factor3@${FULL_VERSION}
 
 .PHONY: release
 release:
 	gh release create ${FULL_VERSION} ${preprelease_flag} --title ${FULL_VERSION} --notes "${FULL_VERSION}"
+	GOPROXY=proxy.golang.org go list -m -u github.com/drornir/factor3@${FULL_VERSION}
 
 .PHONY: version
 version:
