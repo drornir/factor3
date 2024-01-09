@@ -72,10 +72,10 @@ publish: ## Publish a new version to github
 	git push origin ${FULL_VERSION}
 
 .PHONY: release
-release:
-	gh release create ${FULL_VERSION} ${preprelease_flag} --title ${FULL_VERSION} --notes "${FULL_VERSION}"
+release: ## Github Release a published tag
+	gh release create ${FULL_VERSION} ${preprelease_flag} --title ${FULL_VERSION} --generate-notes"
 	GOPROXY=proxy.golang.org go list -m -u github.com/drornir/factor3@${FULL_VERSION}
 
 .PHONY: version
-version:
+version: ## Print the version for releasing and publishing
 	@echo ${FULL_VERSION}
