@@ -3,12 +3,12 @@ package example
 import (
 	"sync"
 
-	"github.com/drornir/factor3/pkg/config"
+	"github.com/drornir/factor3/pkg/factor3"
 )
 
 var (
 	globalConfig       Config
-	globalConfigLoader *config.Loader
+	globalConfigLoader *factor3.Loader
 	globalConfigLock   sync.RWMutex
 )
 

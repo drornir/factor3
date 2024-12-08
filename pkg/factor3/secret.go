@@ -1,4 +1,4 @@
-package config
+package factor3
 
 import "strings"
 

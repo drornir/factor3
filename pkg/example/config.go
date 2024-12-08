@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/drornir/factor3/pkg/config"
+	"github.com/drornir/factor3/pkg/factor3"
 )
 
 //go:generate easytags $GOFILE json:snake,yaml:snake
@@ -22,8 +22,8 @@ type Log struct {
 }
 
 type Github struct {
-	Token config.SecretString `json:"token,omitempty" yaml:"token,omitempty"`
-	App   GithubApp           `json:"app,omitempty" yaml:"app,omitempty"`
+	Token factor3.SecretString `json:"token,omitempty" yaml:"token,omitempty"`
+	App   GithubApp            `json:"app,omitempty" yaml:"app,omitempty"`
 }
 
 type GithubApp struct {

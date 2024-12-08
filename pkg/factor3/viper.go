@@ -1,4 +1,4 @@
-package config
+package factor3
 
 import (
 	"context"
@@ -8,8 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/drornir/factor3/pkg/log"
 	"github.com/spf13/viper"
+
+	"github.com/drornir/factor3/pkg/log"
 )
 
 type InitArgs struct {

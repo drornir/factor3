@@ -1,4 +1,4 @@
-package config
+package factor3
 
 import (
 	"context"
@@ -9,9 +9,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/drornir/factor3/pkg/log"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+
+	"github.com/drornir/factor3/pkg/log"
 )
 
 type Loader struct {

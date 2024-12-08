@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/drornir/factor3/pkg/config"
 	"github.com/drornir/factor3/pkg/example"
+	"github.com/drornir/factor3/pkg/factor3"
 	"github.com/drornir/factor3/pkg/log"
 )
 
@@ -26,7 +26,7 @@ var (
 	viperInstance = viper.New()
 
 	globalConfig       example.Config
-	globalConfigLoader *config.Loader
+	globalConfigLoader *factor3.Loader
 	globalConfigLock   sync.RWMutex
 )
 
@@ -57,7 +57,7 @@ func init() {
 	cobra.OnInitialize(initLogger)
 
 	// setup reading config file and
-	l, err := config.Bind(&globalConfig, viperInstance, RootCmd.Flags())
+	l, err := factor3.Bind(&globalConfig, viperInstance, RootCmd.Flags())
 	if err != nil {
 		cobra.CheckErr(fmt.Errorf("config.Bind: %w", err))
 	}
@@ -70,7 +70,7 @@ func initInitViper() func() {
 }
 
 func initViper() {
-	if err := config.Initialize(config.InitArgs{
+	if err := factor3.Initialize(factor3.InitArgs{
 		Viper:       viperInstance,
 		ProgramName: ProgramName,
 		CfgFile:     flagConfigFile,
