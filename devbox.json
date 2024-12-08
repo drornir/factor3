@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.13.6/.schema/devbox.schema.json",
+  "packages": {
+    "direnv": "latest",
+    "go": "1",
+    "gnumake": "latest",
+    "coreutils-full": "latest",
+    "gofumpt": "latest",
+    "go-task": {
+      "version": "3.37",
+      "patch": "never"
+    },
+    "typos": "1",
+    "typos-lsp": "latest"
+  },
+  "shell": {
+    "init_hook": [
+      "export GOPATH=\"$DEVBOX_PROJECT_ROOT\"/.gopath",
+      "export GOBIN=\"$GOPATH\"/bin",
+      "export PATH=\"$GOBIN:$PATH\"",
+      "export PATH=\"$DEVBOX_PROJECT_ROOT/bin:$PATH\""
+    ],
+    "scripts": {}
+  }
+}

@@ -1,0 +1,105 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  PROJECT: waterboy
+
+tasks:
+  build:
+    desc: gen and build
+    cmds:
+      - task: gen
+      - task: build:go
+
+  build:go:
+    desc: go build
+    generates:
+      - ./bin/{{.PROJECT}}
+    method: checksum
+    sources:
+      - "*.go"
+      - "cmd/**/*.go"
+      - "pkg/**/*.go"
+      - "go.mod"
+      - "go.sum"
+    cmds:
+      - go build -o ./bin/{{.PROJECT}} .
+
+  format:
+    desc: Format
+    set: [e, u, pipefail]
+    cmds:
+      - gofumpt -w ./cmd
+      - gofumpt -w ./pkg
+
+  lint:
+    desc: Lint
+    deps:
+      - task: lint:typos
+      - task: lint:govet
+  lint:typos:
+    cmds:
+      - typos
+  lint:govet:
+    cmds:
+      - go vet ./...
+
+  tests:
+    desc: full testing
+    deps:
+      - task: tests:go-test
+  tests:go-test:
+    cmds:
+      - cmd: go test ./...
+  tests:config:
+    env:
+      WATERBOY_GITHUB_TOKEN: from-taskfile
+      WATERBOY_STRING: from-taskfile
+    cmds:
+      - cmd: go run .  --config waterboy.example.yaml --log-format=json --log-level=trace config
+
+  gen:
+    desc: generate code
+    cmds:
+      - task: gen:go
+  gen:go:
+    generates:
+      - "cmd/**/*.go"
+      - "pkg/**/*.go"
+    sources:
+      - "cmd/**/*.go"
+      - "pkg/**/*.go"
+    cmds:
+      - cmd: go generate ./pkg/...
+      - cmd: go generate ./cmd/...
+
+  dev:docker:
+    desc: docker build and run
+    interactive: true
+    cmds:
+      - cmd: "docker build -t {{.PROJECT}}:local ."
+      - cmd: "docker run -it --rm {{.PROJECT}}:local {{.CLI_ARGS}}"
+
+  dev:update:
+    desc: update everything
+    cmds:
+      - devbox update
+      - go install github.com/betacraft/easytags@v1
+      - go get -u ./...
+      - make bingo-install-and-link-all
+      # - go mod tidy
+
+  dev:init:
+    desc: setup dev environment
+    deps:
+      - dev:init:test
+    cmds:
+      - devbox install
+      - direnv allow
+      - make bingo-install-and-link-all
+      - go install github.com/betacraft/easytags@v1
+      - go get ./...
+
+  dev:init:test:
+    cmds:
+      - which devbox > /dev/null

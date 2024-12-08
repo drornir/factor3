@@ -1,6 +1,17 @@
 # Factor 3
 
-⚠️ This package is still EXPERIMENTAL, so versioning is not used yet.
+## Version 0
+
+⚠️ This project is still in development, so according to semver it is in version 0.
+This means that bumping of minor versions (the `x` in `0.x.y`) signifies breaking changes.
+
+### Version 0.2
+
+I started from scratch, starting from the "opposite" side now - the new implementation
+has no code generation, and everything happens in runtime. The motivation for it is to
+play with the API and integration with cobra and viper and then convert as much as I can to code gen.
+
+---
 
 ## Overview
 
@@ -11,14 +22,14 @@ They suggest to store the configuration in env vars. I completely agree.
 However, it's left to us to define how the env vars are loaded into our app.
 
 In addition to that, some defaults are better stored in a json or yaml, which
-can be overridden 
+can be overridden
 
-This project is inspired by 
+This project is inspired by
 
 - The legendary `github.com/spf13/viper`, and
 - backstage.io's `app-config.yaml` (still not implemented)
 
-The idea is to declaratively define a big struct, and pass that struct to 
+The idea is to declaratively define a big struct, and pass that struct to
 this app, and it returns your filled config.
 
 ## Example
@@ -73,7 +84,7 @@ some_number: 4
 some_flag: true
 ```
 
-And the env vars are 
+And the env vars are
 
 ```sh
 export EX_PORT=9090
@@ -85,7 +96,7 @@ export EX_SOME_FLAG=false
 Setting flags is optional (like `DBConnection` in the example), but you can
 explicitly set them by using the `//factor3:pflag` annotation.
 It accepts between one and two string arguments. For example,
-`//factor3:pflag some-number n` will declare a flag called `some-number`, with 
+`//factor3:pflag some-number n` will declare a flag called `some-number`, with
 the short form `n`.
 
 ## Install
@@ -117,7 +128,7 @@ This is **required** to trigger the code generation for a certain struct type.
 - `filename` is a path to where you place the json or yaml file with values for
   this struct
 - `env-prefix` is a string that will be prepended to all env vars lookups. ⚠️ Note
-  that an underscore will also be prepended between your prefix and the rest of 
+  that an underscore will also be prepended between your prefix and the rest of
   the env var name (for `--env-prefix=PRE` and env var `VAR`, the result will be `PRE_VAR`).
 
 ### In Struct
@@ -127,8 +138,8 @@ This is **required** to trigger the code generation for a certain struct type.
 `//factor3:pflag <LONG_FLAG_NAME> [SHORT_FLAG_NAME]`
 
 Will add flag support for this field. At least one argument is required,
-which is the long form of the flag(`LONG_FLAG_NAME`). Optionally, you can set 
+which is the long form of the flag(`LONG_FLAG_NAME`). Optionally, you can set
 `SHORT_FLAG_NAME`, which must be a one character string representing the short flag letter.
 
-The underlying package in use is not the standard library `flag`, but 
+The underlying package in use is not the standard library `flag`, but
 `github.com/spf13/pflag`, the POSIX compliant alternative.

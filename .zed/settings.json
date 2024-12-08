@@ -1,0 +1,96 @@
+{
+  "hard_tabs": false,
+  "tab_size": 2,
+  "formatter": "auto",
+  "remove_trailing_whitespace_on_save": true,
+  "ensure_final_newline_on_save": true,
+  "enable_language_server": true,
+  "languages": {
+    "Make": {
+      "hard_tabs": true,
+      "tab_size": 4
+    },
+    "Go": {
+      "hard_tabs": true,
+      "tab_size": 4
+    },
+    "TypeScript": {
+      "language_servers": [
+        "deno",
+        "!typescript-language-server",
+        "!vtsls",
+        "!eslint"
+      ],
+      "formatter": "language_server"
+    },
+    "TSX": {
+      "language_servers": [
+        "deno",
+        "!typescript-language-server",
+        "!vtsls",
+        "!eslint"
+      ],
+      "formatter": "language_server"
+    }
+  },
+  "language_overrides": {},
+  "lsp": {
+    "deno": {
+      "settings": {
+        "deno": {
+          "enable": true
+        }
+      }
+    },
+    "gopls": {
+      "initialization_options": {
+        "formatting.gofumpt": true,
+
+        "formatting.local": "github.com/drornir/factor3",
+
+        "hints": {
+          "assignVariableTypes": true,
+          "compositeLiteralFields": true,
+          "compositeLiteralTypes": true,
+          "constantValues": true,
+          "functionTypeParameters": true,
+          "parameterNames": true,
+          "rangeVariableTypes": true
+        }
+      }
+    },
+    "yaml-language-server": {
+      "settings": {
+        "yaml": {
+          "keyOrdering": false,
+          "format": {
+            "singleQuote": true
+          },
+          "schemaStore": { "enabled": true },
+          // yaml-language-server: $schema=https://json.schemastore.org/github-action.json
+          "schemas": {
+            // "../relative/path/schema.json": ["/config*.yaml"]
+            "https://taskfile.dev/schema.json": ["/taskfile.yaml"]
+          }
+        }
+      }
+    },
+    "typos": {
+      "initialization_options": {
+        // Path to your typos config file, .typos.toml by default.
+        "config": "typos.toml",
+        // Path to your typos-lsp executable, takes $PATH into account.
+        // "path": "typos-lsp",
+        // Diagnostic severity within Zed. "Error" by default, can be:
+        // "Error", "Hint", "Information", "Warning"
+        "diagnosticSeverity": "Error",
+        // Minimum logging level for the LSP, displayed in Zed's logs. "info" by default, can be:
+        // "debug", "error", "info", "off", "trace", "warn"
+        "logLevel": "info",
+        // Traces the communication between ZED and the language server. Recommended for debugging only. "off" by default, can be:
+        // "messages", "off", "verbose"
+        "trace.server": "off"
+      }
+    }
+  }
+}

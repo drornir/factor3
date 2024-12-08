@@ -1,3 +1,0 @@
-port: "3001"
-db_connection: root:pass@localhost:3306
-some_number: 4
