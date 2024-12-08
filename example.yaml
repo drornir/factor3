@@ -8,7 +8,3 @@ github:
     client_id: "put-it-here"
     pem_file: "/path/to/pem/file"
     installation_id: "1234567890"
-# testing for waterboy.config
-# string: "x"
-# int: 10
-# string_pointer: "spointer"

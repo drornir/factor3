@@ -2,7 +2,7 @@
 version: "3"
 
 vars:
-  PROJECT: waterboy
+  PROJECT: factor3
 
 tasks:
   build:
@@ -53,10 +53,10 @@ tasks:
       - cmd: go test ./...
   tests:config:
     env:
-      WATERBOY_GITHUB_TOKEN: from-taskfile
-      WATERBOY_STRING: from-taskfile
+      EXAMPLE_GITHUB_TOKEN: from-taskfile
+      EXAMPLE_STRING: from-taskfile
     cmds:
-      - cmd: go run .  --config waterboy.example.yaml --log-format=json --log-level=trace config
+      - cmd: go run .  --config example.yaml --log-format=json --log-level=trace config
 
   gen:
     desc: generate code
@@ -72,13 +72,6 @@ tasks:
     cmds:
       - cmd: go generate ./pkg/...
       - cmd: go generate ./cmd/...
-
-  dev:docker:
-    desc: docker build and run
-    interactive: true
-    cmds:
-      - cmd: "docker build -t {{.PROJECT}}:local ."
-      - cmd: "docker run -it --rm {{.PROJECT}}:local {{.CLI_ARGS}}"
 
   dev:update:
     desc: update everything
@@ -99,7 +92,3 @@ tasks:
       - make bingo-install-and-link-all
       - go install github.com/betacraft/easytags@v1
       - go get ./...
-
-  dev:init:test:
-    cmds:
-      - which devbox > /dev/null

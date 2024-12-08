@@ -7,15 +7,16 @@ import (
 	"os"
 	"sync"
 
-	"github.com/drornir/factor3/pkg/config"
-	"github.com/drornir/factor3/pkg/example"
-	"github.com/drornir/factor3/pkg/log"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/drornir/factor3/pkg/config"
+	"github.com/drornir/factor3/pkg/example"
+	"github.com/drornir/factor3/pkg/log"
 )
 
-const ProgramName = "waterboy"
+const ProgramName = "example"
 
 var (
 	flagConfigFile string
@@ -32,16 +33,8 @@ var (
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   fmt.Sprintf("%s", ProgramName),
-	Short: "Productivity tool for developers that work with a Product Team",
-	Long: `As developers, we all need to connect our coding to "The Business".
-This means we need to open a ticket, a task or a card, however you name it, and
-connect it to our Pull Request, or at least the branch name.
-
-With the rise of popularity of SOC2, it's usually unavoidable.
-
-waterboy is a cli tool meant to make use of this knowledge graph in order to streamline
-the process of maintaining this graph, but also query it in the rare case that 'git blame' is not enough
-	`,
+	Short: "example",
+	Long:  "",
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
