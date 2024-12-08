@@ -2,8 +2,6 @@ package log
 
 import (
 	"context"
-	"log/slog"
-	"os"
 	"sync"
 )
 
@@ -13,8 +11,7 @@ var (
 )
 
 func init() {
-	// users should override this. But if they don't, let's put a sane default
-	globalLogger = WrapSlogger(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{})))
+	globalLogger = NoopLogger{}
 }
 
 func GG() Logger {
