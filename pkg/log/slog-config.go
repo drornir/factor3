@@ -1,13 +1,11 @@
 package log
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
+	"path"
 	"strings"
 	"time"
-
-	"github.com/spf13/cobra"
 )
 
 func SlogReplacerMinimal() func(groups []string, a slog.Attr) slog.Attr {
@@ -27,15 +25,32 @@ func SlogReplacerMinimal() func(groups []string, a slog.Attr) slog.Attr {
 			if !ok {
 				return a
 			}
+
+			var paths []string
 			cwd, err := os.Getwd()
-			cobra.CheckErr(err)
+			if err == nil {
+				paths = append(paths, cwd+"/")
+			}
 			gopath := os.Getenv("GOPATH")
-			fmt.Println("src", src)
-			for _, prefix := range []string{gopath, cwd} {
+			if gopath != "" {
+				paths = append(paths, gopath+"/")
+			}
+			if modfile := os.Getenv("GOMOD"); modfile != "" {
+				moddir := path.Dir(modfile)
+				paths = append(paths, moddir+"/")
+			}
+			homedir, err := os.UserHomeDir()
+			if err == nil {
+				paths = append(paths, homedir+"/")
+			}
+
+			// fmt.Println("homedir=", homedir, "cwd=", cwd, "gopath=", gopath)
+			for _, prefix := range paths {
 				if smaller, ok := strings.CutPrefix(src.File, prefix); ok {
 					src.File = smaller
 				}
 			}
+			return a
 		}
 		return a
 	}

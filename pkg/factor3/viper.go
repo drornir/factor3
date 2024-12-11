@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/drornir/factor3/pkg/log"
@@ -19,7 +20,7 @@ type InitArgs struct {
 	CfgFile     string
 }
 
-func Initialize(a InitArgs) error {
+func InitializeViper(a InitArgs) error {
 	log.GG().D(context.TODO(), "initializing viper", "programName", a.ProgramName)
 	a.Viper.SetEnvPrefix(a.ProgramName)
 	a.Viper.AllowEmptyEnv(true)
@@ -49,10 +50,29 @@ func Initialize(a InitArgs) error {
 		if !errors.Is(err, viper.ConfigFileNotFoundError{}) {
 			return fmt.Errorf("reading in config file using viper: %w", err)
 		}
-		fmt.Fprintln(os.Stderr, err.Error())
+		// fmt.Fprintln(os.Stderr, err.Error())
 	} else {
-		fmt.Fprintln(os.Stderr, "Read in config file:", a.Viper.ConfigFileUsed())
+		// fmt.Fprintln(os.Stderr, "Read in config file:", a.Viper.ConfigFileUsed())
 	}
 
 	return nil
+}
+
+type viperFlagAdapter struct {
+	pf *pflag.Flag
+}
+
+func (f viperFlagAdapter) HasChanged() bool    { return f.pf.Changed }
+func (f viperFlagAdapter) ValueString() string { return f.pf.Value.String() }
+func (f viperFlagAdapter) ValueType() string   { return f.pf.Value.Type() }
+func (f viperFlagAdapter) Name() string {
+	return strings.ReplaceAll(f.pf.Name, "-", ".")
+}
+
+type viperFlagsAdapter struct{ pfs *pflag.FlagSet }
+
+func (fs viperFlagsAdapter) VisitAll(fn func(viper.FlagValue)) {
+	fs.pfs.VisitAll(func(pf *pflag.Flag) {
+		fn(viperFlagAdapter{pf: pf})
+	})
 }

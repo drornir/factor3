@@ -10,10 +10,10 @@ import (
 //go:generate easytags $GOFILE json:snake,yaml:snake
 
 type Config struct {
-	Version string `json:"version" yaml:"version"` // v0
+	Version string `json:"version" yaml:"version"`
 	Log     Log    `flag:"log" json:"log" yaml:"log"`
 	Github  Github `json:"github,omitempty" yaml:"github,omitempty"`
-	String  string `json:"string" yaml:"string"`
+	String  string `flag:"string" json:"string" yaml:"string"`
 }
 
 type Log struct {

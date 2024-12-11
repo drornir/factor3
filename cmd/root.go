@@ -70,7 +70,7 @@ func initInitViper() func() {
 }
 
 func initViper() {
-	if err := factor3.Initialize(factor3.InitArgs{
+	if err := factor3.InitializeViper(factor3.InitArgs{
 		Viper:       viperInstance,
 		ProgramName: ProgramName,
 		CfgFile:     flagConfigFile,

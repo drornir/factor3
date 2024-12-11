@@ -96,7 +96,10 @@ func (p *Loader) bind(into any) error {
 		return ParseError{Err: err, Value: into}
 	}
 	if p.pflagset != nil && p.viper != nil {
-		p.viper.BindPFlags(p.pflagset)
+		log.GG().D(context.TODO(), "binding pflags to viper")
+
+		// p.viper.BindPFlags(p.pflagset)
+		p.viper.BindFlagValues(viperFlagsAdapter{pfs: p.pflagset})
 	}
 
 	return nil
@@ -157,47 +160,92 @@ func (l *Loader) registerPflag(v reflect.Value) {
 	switch v.Type().Kind() {
 	case reflect.Bool:
 		c := v.Interface().(bool)
-		l.pflagset.BoolVar(&c, flagsPath, c, "")
+		l.pflagset.Bool(flagsPath, c, "")
 	case reflect.Int:
 		i := v.Interface().(int)
-		l.pflagset.IntVar(&i, flagsPath, i, "")
+		l.pflagset.Int(flagsPath, i, "")
 	case reflect.Int8:
 		i := v.Interface().(int8)
-		l.pflagset.Int8Var(&i, flagsPath, i, "")
+		l.pflagset.Int8(flagsPath, i, "")
 	case reflect.Int16:
 		i := v.Interface().(int16)
-		l.pflagset.Int16Var(&i, flagsPath, i, "")
+		l.pflagset.Int16(flagsPath, i, "")
 	case reflect.Int32:
 		i := v.Interface().(int32)
-		l.pflagset.Int32Var(&i, flagsPath, i, "")
+		l.pflagset.Int32(flagsPath, i, "")
 	case reflect.Int64:
 		i := v.Interface().(int64)
-		l.pflagset.Int64Var(&i, flagsPath, i, "")
+		l.pflagset.Int64(flagsPath, i, "")
 	case reflect.Uint:
 		i := v.Interface().(uint)
-		l.pflagset.UintVar(&i, flagsPath, i, "")
+		l.pflagset.Uint(flagsPath, i, "")
 	case reflect.Uint8:
 		i := v.Interface().(uint8)
-		l.pflagset.Uint8Var(&i, flagsPath, i, "")
+		l.pflagset.Uint8(flagsPath, i, "")
 	case reflect.Uint16:
 		i := v.Interface().(uint16)
-		l.pflagset.Uint16Var(&i, flagsPath, i, "")
+		l.pflagset.Uint16(flagsPath, i, "")
 	case reflect.Uint32:
 		i := v.Interface().(uint32)
-		l.pflagset.Uint32Var(&i, flagsPath, i, "")
+		l.pflagset.Uint32(flagsPath, i, "")
 	case reflect.Uint64:
 		i := v.Interface().(uint64)
-		l.pflagset.Uint64Var(&i, flagsPath, i, "")
+		l.pflagset.Uint64(flagsPath, i, "")
 	case reflect.Float32:
 		f := v.Interface().(float32)
-		l.pflagset.Float32Var(&f, flagsPath, f, "")
+		l.pflagset.Float32(flagsPath, f, "")
 	case reflect.Float64:
 		f := v.Interface().(float64)
-		l.pflagset.Float64Var(&f, flagsPath, f, "")
+		l.pflagset.Float64(flagsPath, f, "")
 	case reflect.String:
 		s := v.Interface().(string)
-		l.pflagset.StringVar(&s, flagsPath, s, "")
+		l.pflagset.String(flagsPath, s, "")
 	}
+
+	// switch v.Type().Kind() {
+	// case reflect.Bool:
+	// 	c := v.Interface().(bool)
+	// 	l.pflagset.BoolVar(&c, flagsPath, c, "")
+	// case reflect.Int:
+	// 	i := v.Interface().(int)
+	// 	l.pflagset.IntVar(&i, flagsPath, i, "")
+	// case reflect.Int8:
+	// 	i := v.Interface().(int8)
+	// 	l.pflagset.Int8Var(&i, flagsPath, i, "")
+	// case reflect.Int16:
+	// 	i := v.Interface().(int16)
+	// 	l.pflagset.Int16Var(&i, flagsPath, i, "")
+	// case reflect.Int32:
+	// 	i := v.Interface().(int32)
+	// 	l.pflagset.Int32Var(&i, flagsPath, i, "")
+	// case reflect.Int64:
+	// 	i := v.Interface().(int64)
+	// 	l.pflagset.Int64Var(&i, flagsPath, i, "")
+	// case reflect.Uint:
+	// 	i := v.Interface().(uint)
+	// 	l.pflagset.UintVar(&i, flagsPath, i, "")
+	// case reflect.Uint8:
+	// 	i := v.Interface().(uint8)
+	// 	l.pflagset.Uint8Var(&i, flagsPath, i, "")
+	// case reflect.Uint16:
+	// 	i := v.Interface().(uint16)
+	// 	l.pflagset.Uint16Var(&i, flagsPath, i, "")
+	// case reflect.Uint32:
+	// 	i := v.Interface().(uint32)
+	// 	l.pflagset.Uint32Var(&i, flagsPath, i, "")
+	// case reflect.Uint64:
+	// 	i := v.Interface().(uint64)
+	// 	l.pflagset.Uint64Var(&i, flagsPath, i, "")
+	// case reflect.Float32:
+	// 	f := v.Interface().(float32)
+	// 	l.pflagset.Float32Var(&f, flagsPath, f, "")
+	// case reflect.Float64:
+	// 	f := v.Interface().(float64)
+	// 	l.pflagset.Float64Var(&f, flagsPath, f, "")
+	// case reflect.String:
+	// 	s := v.Interface().(string)
+	// 	l.pflagset.StringVar(&s, flagsPath, s, "")
+	// }
 }
 
 func (l *Loader) registerViper(vAddr reflect.Value) {
@@ -213,6 +261,7 @@ func (l *Loader) registerViper(vAddr reflect.Value) {
 		untypedVal := l.viper.Get(viperPath)
 		if untypedVal == nil {
 			log.GG().D(context.TODO(), "value is nil", "path", viperPath)
+
 			return nil
 		}
 		log.GG().D(context.Background(), "loaded viper value", "path", viperPath)
