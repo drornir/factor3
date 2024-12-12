@@ -19,8 +19,9 @@ type Loader struct {
 	viper    *viper.Viper
 	pflagset *pflag.FlagSet
 
-	jpath []string
-	fpath []string
+	jpath                []string
+	fpath                []string
+	viperPathByPFlagName map[string]string
 
 	loaders []func() error
 	boundTo *any
@@ -44,7 +45,7 @@ type Loader struct {
 //  2. Create a new flagset, but don't bind it directly. Annotated toy struct fields with
 //     `flag:"flag-name"` and Bind() will discover it and register it on you pflagset
 //
-// In both cases, viper.BindPFlags() will be called on `pflagset` before returning from this function
+// In both cases, viper.BindFlagValues() will be called on `pflagset` before returning from this function
 func Bind(into any, viper *viper.Viper, pflagset *pflag.FlagSet) (*Loader, error) {
 	l := newLoader(viper, pflagset)
 	if err := l.bind(into); err != nil {
@@ -76,36 +77,39 @@ func (l *Loader) Load() error {
 
 func newLoader(viper *viper.Viper, pflagset *pflag.FlagSet) *Loader {
 	return &Loader{
-		viper:    viper,
-		pflagset: pflagset,
-		lock:     &sync.RWMutex{},
+		viper:                viper,
+		pflagset:             pflagset,
+		lock:                 &sync.RWMutex{},
+		viperPathByPFlagName: map[string]string{},
 	}
 }
 
-func (p *Loader) bind(into any) error {
-	p.lock.Lock()
-	defer p.lock.Unlock()
+func (l *Loader) bind(into any) error {
+	l.lock.Lock()
+	defer l.lock.Unlock()
 
 	reflected := reflect.ValueOf(into)
 	if reflected.Kind() != reflect.Pointer || reflected.Elem().Kind() != reflect.Struct {
 		return ParseError{Err: fmt.Errorf("input must be a pointer to struct, got %s", reflected.Type()), Value: into}
 	}
 
-	p.boundTo = &into
-	if err := p.visit(reflected.Elem()); err != nil {
+	l.boundTo = &into
+	if err := l.visit(reflected.Elem()); err != nil {
 		return ParseError{Err: err, Value: into}
 	}
-	if p.pflagset != nil && p.viper != nil {
+	if l.pflagset != nil && l.viper != nil {
 		log.GG().D(context.TODO(), "binding pflags to viper")
 
-		// p.viper.BindPFlags(p.pflagset)
-		p.viper.BindFlagValues(viperFlagsAdapter{pfs: p.pflagset})
+		l.viper.BindFlagValues(viperFlagsAdapter{
+			pfs:            l.pflagset,
+			vipathByPFName: l.viperPathByPFlagName,
+		})
 	}
 
 	return nil
 }
 
-func (p *Loader) visit(v reflect.Value) error {
+func (l *Loader) visit(v reflect.Value) error {
 	switch v.Type().Kind() {
 	case reflect.Bool,
 		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Float32, reflect.Float64,
@@ -115,8 +119,9 @@ func (p *Loader) visit(v reflect.Value) error {
 		reflect.Map,
 		reflect.Slice, reflect.Array:
 
-		p.registerPflag(v)
-		p.registerViper(v.Addr())
+		l.registerPflag(v)
+		l.registerViper(v.Addr())
+		l.addPflagNameToViperMapping()
 
 		return nil
 
@@ -125,25 +130,25 @@ func (p *Loader) visit(v reflect.Value) error {
 			// fmt.Fprintln(os.Stderr, "v is nil", v)
 			v.Set(reflect.New(v.Type().Elem()))
 		}
-		if err := p.visit(v.Elem()); err != nil {
+		if err := l.visit(v.Elem()); err != nil {
 			return err
 		}
 		return nil
 	case reflect.Struct:
 		for i := v.NumField() - 1; i >= 0; i-- {
 			f := v.Type().Field(i)
-			p.jpath = append(p.jpath, toJSONName(f))
-			p.fpath = append(p.fpath, f.Tag.Get("flag"))
+			l.jpath = append(l.jpath, toJSONName(f))
+			l.fpath = append(l.fpath, f.Tag.Get("flag"))
 			vv := v.Field(i)
-			if err := p.visit(vv); err != nil {
+			if err := l.visit(vv); err != nil {
 				return err
 			}
-			p.jpath = p.jpath[:len(p.jpath)-1]
-			p.fpath = p.fpath[:len(p.fpath)-1]
+			l.jpath = l.jpath[:len(l.jpath)-1]
+			l.fpath = l.fpath[:len(l.fpath)-1]
 		}
 		return nil
 	default:
-		return p.errWithContext("value cannot be visited", v, strings.Join(p.jpath, "."))
+		return l.errWithContext("value cannot be visited", v, strings.Join(l.jpath, "."))
 	}
 }
 
@@ -248,8 +253,12 @@ func (l *Loader) registerPflag(v reflect.Value) {
 	// }
 }
 
+func (l *Loader) jpathString() string {
+	return strings.Join(l.jpath, ".")
+}
+
 func (l *Loader) registerViper(vAddr reflect.Value) {
-	viperPath := strings.Join(l.jpath, ".")
+	viperPath := l.jpathString()
 	loader := func() error {
 		// if !l.viper.IsSet(viperPath) {
 		// 	fmt.Fprintln(os.Stderr, "vAddr", vAddr, "T", vAddr.Type())
@@ -271,6 +280,13 @@ func (l *Loader) registerViper(vAddr reflect.Value) {
 		return nil
 	}
 	l.loaders = append(l.loaders, loader)
+}
+
+func (l *Loader) addPflagNameToViperMapping() {
+	if l.fpathString() == "" {
+		return
+	}
+	l.viperPathByPFlagName[l.fpathString()] = l.jpathString()
 }
 
 func (l *Loader) errWithContext(msg string, v reflect.Value, jsonPath string) error {

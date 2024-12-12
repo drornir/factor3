@@ -59,20 +59,27 @@ func InitializeViper(a InitArgs) error {
 }
 
 type viperFlagAdapter struct {
-	pf *pflag.Flag
+	pf        *pflag.Flag
+	viperPath string
 }
 
 func (f viperFlagAdapter) HasChanged() bool    { return f.pf.Changed }
 func (f viperFlagAdapter) ValueString() string { return f.pf.Value.String() }
 func (f viperFlagAdapter) ValueType() string   { return f.pf.Value.Type() }
 func (f viperFlagAdapter) Name() string {
-	return strings.ReplaceAll(f.pf.Name, "-", ".")
+	if f.viperPath == "" {
+		return strings.ReplaceAll(f.pf.Name, "-", ".")
+	}
+	return f.viperPath
 }
 
-type viperFlagsAdapter struct{ pfs *pflag.FlagSet }
+type viperFlagsAdapter struct {
+	pfs            *pflag.FlagSet
+	vipathByPFName map[string]string
+}
 
 func (fs viperFlagsAdapter) VisitAll(fn func(viper.FlagValue)) {
 	fs.pfs.VisitAll(func(pf *pflag.Flag) {
-		fn(viperFlagAdapter{pf: pf})
+		fn(viperFlagAdapter{pf: pf, viperPath: fs.vipathByPFName[pf.Name]})
 	})
 }

@@ -54,7 +54,12 @@ github:
 			env: map[string]string{
 				"TEST_BASICS_GITHUB_TOKEN": "my-secret-token",
 			},
-			flags: []string{"--log-level", "info", "--string", "fromflag"},
+			flags: []string{
+				"--log-level", "info",
+				"--string", "fromflag",
+				"--longer-string", "lfromflag",
+				"--log-longer-string", "loglongstringflag",
+			},
 			checks: func(t *testing.T, value example.Config) {
 				assert.Equal(t, "v0", value.Version)
 				assert.Equal(t, "info", value.Log.Level)
@@ -62,6 +67,8 @@ github:
 				assert.Equal(t, "my-secret-token", string(value.Github.Token))
 				assert.Equal(t, "/path/to/pem/file", string(value.Github.App.PemFile))
 				assert.Equal(t, "fromflag", value.String)
+				assert.Equal(t, "lfromflag", value.LongerString)
+				assert.Equal(t, "loglongstringflag", value.Log.LongerString)
 			},
 		},
 	}
