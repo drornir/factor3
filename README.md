@@ -1,145 +1,135 @@
 # Factor 3
 
-## Version 0
+## Usage
+
+Install using
+
+```bash
+go get github.com/drornir/factor3
+```
+
+Here's a small program to get you started with cobra and viper:
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+
+	"github.com/drornir/factor3/pkg/factor3"
+	"github.com/fsnotify/fsnotify"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
+
+// Define a struct
+type (
+	Config struct {
+		Username string               `flag:"username" json:"username"`
+		Password factor3.SecretString `flag:"password" json:"password"`
+		Log      LogConfig            `flag:"log" json:"log"`
+	}
+	LogConfig struct {
+		Level string `flag:"level" json:"level"`
+	}
+)
+
+var (
+	// define a variable to bind with factor3.Bind()
+	rootConfig Config
+	// an example cobra command that uses the config
+	rootCmd    = &cobra.Command{
+		Use: "myprogram",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("# config = %#v\n", rootConfig)
+		},
+	}
+)
+
+func init() {
+	viperInstance := viper.New()
+
+	// Setting up viper with options that fit factor3
+	err := factor3.InitializeViper(factor3.InitArgs{
+		Viper:       viperInstance,
+		ProgramName: "myprogram", // Used as the env variables prefix
+		CfgFile:     "config.json", // Optional path to config file
+	})
+	cobra.CheckErr(err)
+
+	pflags := rootCmd.Flags()
+	// Using Bind() we create Loader that populates the config when called
+	// It also registers the flags in your pflag.FlagSet
+	loader, err := factor3.Bind(&rootConfig, viperInstance, pflags)
+	cobra.CheckErr(err)
+
+	// we need to let cobra parse to commandline flags before calling Load(), so we put it in cobra.OnInitialize()
+	cobra.OnInitialize(func() {
+		err := loader.Load()
+		cobra.CheckErr(err)
+		// Advanced: You can call Load() multiple times, for example in reaction to changes to the config file.
+		viperInstance.OnConfigChange(func(in fsnotify.Event) {
+			if err := loader.Load(); err != nil {
+				fmt.Println("error reloading config on viper.OnConfigChange")
+			}
+		})
+	})
+}
+
+func main() {
+	err := rootCmd.Execute()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+```
+
+This program just prints the configuration.
+For this example, as defined above in CfgFile, create a config file json called 'config.json'.
+
+```bash
+cat <<EOF > config.json
+{
+  "username": "u",
+  "password": "p",
+  "log": {
+    "level": "warn"
+  }
+}
+EOF
+
+## reads the file specified by `CfgFile`,
+$ go run main.go
+# config = main.Config{Username:"u", Password:"p", ...}
+
+## flags that were explicitly set on the command line will override the config file
+$ go run main.go --username=u_flag --password=p_flag
+# config = main.Config{Username:"u_flag", Password:"p_flag", ...}
+
+## env vars that were explicitly set will override the config file
+## note that "MYPROGRAM_" comes from the ProgramName set in the `InitArgs`
+$ MYPROGRAM_PASSWORD='p_env' go run main.go --username=u_flag
+# config = main.Config{Username:"u_flag", Password:"p_env", ...}
+
+## nested fields can be set using underscore ('_') for ENV, and dash ('-') for flags
+$ MYPROGRAM_LOG_LEVEL=info go run main.go --log-level=debug
+# config = main.Config{..., Log:main.LogConfig{Level:"debug"}}
+```
+
+## Development
+
+### Version 0
 
 ⚠️ This project is still in development, so according to semver it is in version 0.
 This means that bumping of minor versions (the `x` in `0.x.y`) signifies breaking changes.
 
-### Version 0.2
+#### Version 0.2
 
 I started from scratch, starting from the "opposite" side now - the new implementation
 has no code generation, and everything happens in runtime. The motivation for it is to
 play with the API and integration with cobra and viper and then convert as much as I can to code gen.
 
----
+#### Version 0.1
 
-## Overview
-
-Factor number Three of the [Twelve Factor App](https://12factor.net/config) is "Config"
-
-They suggest to store the configuration in env vars. I completely agree.
-
-However, it's left to us to define how the env vars are loaded into our app.
-
-In addition to that, some defaults are better stored in a json or yaml, which
-can be overridden
-
-This project is inspired by
-
-- The legendary `github.com/spf13/viper`, and
-- backstage.io's `app-config.yaml` (still not implemented)
-
-The idea is to declaratively define a big struct, and pass that struct to
-this app, and it returns your filled config.
-
-## Example
-
-The [example](./example/app) looks like this:
-
-```go
-package main
-
-//go:generate factor3 generate
-
-import (
-	"log"
-	"os"
-
-	factor3 "github.com/drornir/factor3/pkg/runtime"
-)
-
-//factor3:generate --filename ./example/app/config.yaml --env-prefix EX
-type Config struct {
-	DBConnection string
-	//factor3:pflag port
-	Port string
-	//factor3:pflag some-number n
-	SomeNumber int
-	//factor3:pflag some-flag
-	SomeFlag bool
-}
-
-func main() {
-	var c Config
-	if err := factor3.Load(&c, os.Args[1:]); err != nil {
-		log.Fatal(err)
-	}
-	// ... c is ready
-}
-```
-
-You need to include `//go:generate factor3 generate` once, somewhere in the package,
-in order to trigger code generation.
-
-After that, you need annotate every struct you want with `//factor3:generate` in
-order to generate an implementation of `Factor3Load()`, which loads the data into
-the struct.
-
-For this example, the corresponding yaml is the following (notice it's snakecase)
-
-```yaml
-port: "3001"
-db_connection: root:pass@localhost:3306
-some_number: 4
-some_flag: true
-```
-
-And the env vars are
-
-```sh
-export EX_PORT=9090
-export EX_DB_CONNECTION=root:pass@localhost:3307
-export EX_SOME_NUMBER=6
-export EX_SOME_FLAG=false
-```
-
-Setting flags is optional (like `DBConnection` in the example), but you can
-explicitly set them by using the `//factor3:pflag` annotation.
-It accepts between one and two string arguments. For example,
-`//factor3:pflag some-number n` will declare a flag called `some-number`, with
-the short form `n`.
-
-## Install
-
-Using go install
-
-```sh
-go install github.com/drornir/factor3
-```
-
-## Annotations API
-
-Adding configuration to the code generation is done using one line comments
-which start with `//factor3:`. Notice there is no space after the `//`. We call
-these comments "annotations".
-
-"Top level" annotations means comments that come directly above the struct type.
-
-"In Struct" annotations means comments that come directly above a field in the struct.
-
-### Top Level
-
-#### `factor3:generate`
-
-`//factor3:generate [--filename <FILE_PATH>] [--env-prefix <PREFIX>]`
-
-This is **required** to trigger the code generation for a certain struct type.
-
-- `filename` is a path to where you place the json or yaml file with values for
-  this struct
-- `env-prefix` is a string that will be prepended to all env vars lookups. ⚠️ Note
-  that an underscore will also be prepended between your prefix and the rest of
-  the env var name (for `--env-prefix=PRE` and env var `VAR`, the result will be `PRE_VAR`).
-
-### In Struct
-
-#### `//factor3:pflag`
-
-`//factor3:pflag <LONG_FLAG_NAME> [SHORT_FLAG_NAME]`
-
-Will add flag support for this field. At least one argument is required,
-which is the long form of the flag(`LONG_FLAG_NAME`). Optionally, you can set
-`SHORT_FLAG_NAME`, which must be a one character string representing the short flag letter.
-
-The underlying package in use is not the standard library `flag`, but
-`github.com/spf13/pflag`, the POSIX compliant alternative.
+moved to [docs](./docs/why.md)

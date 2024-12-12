@@ -65,10 +65,6 @@ func init() {
 	cobra.OnInitialize(initViper)
 }
 
-func initInitViper() func() {
-	return func() { initViper() }
-}
-
 func initViper() {
 	if err := factor3.InitializeViper(factor3.InitArgs{
 		Viper:       viperInstance,
@@ -99,11 +95,10 @@ func initViper() {
 }
 
 func initLogger() {
-	logOut := os.Stdout // TODO  configurable
+	logOut := os.Stdout
 
 	var sloggerHandler slog.Handler
 	sloggerOpts := &slog.HandlerOptions{
-		// AddSource: log.ParseLevel(flagLogLevel) <= slog.LevelDebug,
 		AddSource:   false,
 		Level:       log.PflagLeveler{Flag: &flagLogLevel},
 		ReplaceAttr: log.SlogReplacerMinimal(),

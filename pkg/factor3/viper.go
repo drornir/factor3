@@ -28,7 +28,6 @@ func InitializeViper(a InitArgs) error {
 	a.Viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	if a.CfgFile != "" {
-		// Use config file from the flag.
 		a.Viper.SetConfigFile(a.CfgFile)
 	} else {
 		configHome := os.Getenv("XDG_CONFIG_HOME")

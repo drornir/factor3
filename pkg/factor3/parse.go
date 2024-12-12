@@ -164,93 +164,50 @@ func (l *Loader) registerPflag(v reflect.Value) {
 
 	switch v.Type().Kind() {
 	case reflect.Bool:
-		c := v.Interface().(bool)
+		c := v.Convert(reflect.TypeOf(bool(false))).Interface().(bool)
 		l.pflagset.Bool(flagsPath, c, "")
 	case reflect.Int:
-		i := v.Interface().(int)
+		i := v.Convert(reflect.TypeOf(int(0))).Interface().(int)
 		l.pflagset.Int(flagsPath, i, "")
 	case reflect.Int8:
-		i := v.Interface().(int8)
+		i := v.Convert(reflect.TypeOf(int8(0))).Interface().(int8)
 		l.pflagset.Int8(flagsPath, i, "")
 	case reflect.Int16:
-		i := v.Interface().(int16)
+		i := v.Convert(reflect.TypeOf(int16(0))).Interface().(int16)
 		l.pflagset.Int16(flagsPath, i, "")
 	case reflect.Int32:
-		i := v.Interface().(int32)
+		i := v.Convert(reflect.TypeOf(int32(0))).Interface().(int32)
 		l.pflagset.Int32(flagsPath, i, "")
 	case reflect.Int64:
-		i := v.Interface().(int64)
+		i := v.Convert(reflect.TypeOf(int64(0))).Interface().(int64)
 		l.pflagset.Int64(flagsPath, i, "")
 	case reflect.Uint:
-		i := v.Interface().(uint)
+		i := v.Convert(reflect.TypeOf(uint(0))).Interface().(uint)
 		l.pflagset.Uint(flagsPath, i, "")
 	case reflect.Uint8:
-		i := v.Interface().(uint8)
+		i := v.Convert(reflect.TypeOf(uint8(0))).Interface().(uint8)
 		l.pflagset.Uint8(flagsPath, i, "")
 	case reflect.Uint16:
-		i := v.Interface().(uint16)
+		i := v.Convert(reflect.TypeOf(uint16(0))).Interface().(uint16)
 		l.pflagset.Uint16(flagsPath, i, "")
 	case reflect.Uint32:
-		i := v.Interface().(uint32)
+		i := v.Convert(reflect.TypeOf(uint32(0))).Interface().(uint32)
 		l.pflagset.Uint32(flagsPath, i, "")
 	case reflect.Uint64:
-		i := v.Interface().(uint64)
+		i := v.Convert(reflect.TypeOf(uint64(0))).Interface().(uint64)
 		l.pflagset.Uint64(flagsPath, i, "")
 	case reflect.Float32:
-		f := v.Interface().(float32)
+		f := v.Convert(reflect.TypeOf(float64(0))).Interface().(float32)
 		l.pflagset.Float32(flagsPath, f, "")
 	case reflect.Float64:
-		f := v.Interface().(float64)
+		f := v.Convert(reflect.TypeOf(float64(0))).Interface().(float64)
 		l.pflagset.Float64(flagsPath, f, "")
 	case reflect.String:
-		s := v.Interface().(string)
+		s := v.Convert(reflect.TypeOf("")).Interface().(string)
 		l.pflagset.String(flagsPath, s, "")
+	default:
+		// don't register anything if it's not a supported type
 	}
-
-	// switch v.Type().Kind() {
-	// case reflect.Bool:
-	// 	c := v.Interface().(bool)
-	// 	l.pflagset.BoolVar(&c, flagsPath, c, "")
-	// case reflect.Int:
-	// 	i := v.Interface().(int)
-	// 	l.pflagset.IntVar(&i, flagsPath, i, "")
-	// case reflect.Int8:
-	// 	i := v.Interface().(int8)
-	// 	l.pflagset.Int8Var(&i, flagsPath, i, "")
-	// case reflect.Int16:
-	// 	i := v.Interface().(int16)
-	// 	l.pflagset.Int16Var(&i, flagsPath, i, "")
-	// case reflect.Int32:
-	// 	i := v.Interface().(int32)
-	// 	l.pflagset.Int32Var(&i, flagsPath, i, "")
-	// case reflect.Int64:
-	// 	i := v.Interface().(int64)
-	// 	l.pflagset.Int64Var(&i, flagsPath, i, "")
-	// case reflect.Uint:
-	// 	i := v.Interface().(uint)
-	// 	l.pflagset.UintVar(&i, flagsPath, i, "")
-	// case reflect.Uint8:
-	// 	i := v.Interface().(uint8)
-	// 	l.pflagset.Uint8Var(&i, flagsPath, i, "")
-	// case reflect.Uint16:
-	// 	i := v.Interface().(uint16)
-	// 	l.pflagset.Uint16Var(&i, flagsPath, i, "")
-	// case reflect.Uint32:
-	// 	i := v.Interface().(uint32)
-	// 	l.pflagset.Uint32Var(&i, flagsPath, i, "")
-	// case reflect.Uint64:
-	// 	i := v.Interface().(uint64)
-	// 	l.pflagset.Uint64Var(&i, flagsPath, i, "")
-	// case reflect.Float32:
-	// 	f := v.Interface().(float32)
-	// 	l.pflagset.Float32Var(&f, flagsPath, f, "")
-	// case reflect.Float64:
-	// 	f := v.Interface().(float64)
-	// 	l.pflagset.Float64Var(&f, flagsPath, f, "")
-	// case reflect.String:
-	// 	s := v.Interface().(string)
-	// 	l.pflagset.StringVar(&s, flagsPath, s, "")
-	// }
 }
 
 func (l *Loader) jpathString() string {
