@@ -1,5 +1,28 @@
 # Factor 3
 
+## What is this?
+
+This project's goal is to simplify working with what we call "Config".
+
+In [Twelve Factor App](https://12factor.net/config), the third item on the list is just called Config.
+While I like the ideas and concepts in in this page, it was written in simpler times.
+
+Today, the "config" part of our app is much more complex. If we're thinking about running our app as a container in K8s,
+we might needs to consume and build our configuration from a subset of the kinds of systems like:
+
+- The classic Operating System environment and CLI arguments
+- User defined settings is the form of json like formats
+- Contents of files that are not in json like format (e.g pem files)
+- Pull sensitive secrets from some secret storage app (e.g 1Password, AWS Secret Manager, K8s Secrets)
+- Feature flags set is some SaaS platform outside of the cluster
+- Annotations set on the K8s Pod running this container (e.g for rolling updates via Argo Rollouts)
+
+Piecing together your inputs from so many types of systems becomes a whole project out if itself. It's always NOT what
+you want to spend time on when starting a new Go project. For me, it's always a big distraction from the prototype I'm trying to build.
+I always end up doing it the same sloppy manual glue code for at least having some basic cobra+viper app.
+
+**factor3** is an opinionated approach to streamline working with config systems.
+
 ## Usage
 
 Install using
@@ -119,6 +142,14 @@ $ MYPROGRAM_LOG_LEVEL=info go run main.go --log-level=debug
 
 ## Development
 
+### Goals for Version v1.0
+
+- [x] cobra an viper
+- [ ] Multiple files with merge (e.g for supporting `myapp -c defaults.yaml -c production.yaml`)
+- [ ] `type Provider interface{...}` - an abstraction to capture providers of secrets and/or feature flags or anything custom
+- [ ] `Provider` should optionally support "watch mode", similar to how file watching works. The option to setup polling on the value should be generic and provided by the `factor`.
+- [ ]
+
 ### Version 0
 
 ⚠️ This project is still in development, so according to semver it is in version 0.
@@ -132,4 +163,4 @@ play with the API and integration with cobra and viper and then convert as much 
 
 #### Version 0.1
 
-moved to [docs](./docs/why.md)
+moved to [docs](./docs/version_0_1.md)

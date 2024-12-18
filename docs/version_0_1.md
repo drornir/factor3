@@ -1,7 +1,8 @@
 # Design, Motivation and Discussion
 
-This is where I explain (to myself) why I'm doing this library, what are this project goals etc.
-It is currently outdated.
+⚠️ outdated ⚠️
+
+This is where I explain why I'm doing this library, what are this project goals etc.
 
 ## Overview
 
