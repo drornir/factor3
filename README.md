@@ -142,18 +142,20 @@ $ MYPROGRAM_LOG_LEVEL=info go run main.go --log-level=debug
 
 ## Development
 
-### Goals for Version v1.0
-
-- [x] cobra an viper
-- [ ] Multiple files with merge (e.g for supporting `myapp -c defaults.yaml -c production.yaml`)
-- [ ] `type Provider interface{...}` - an abstraction to capture providers of secrets and/or feature flags or anything custom
-- [ ] `Provider` should optionally support "watch mode", similar to how file watching works. The option to setup polling on the value should be generic and provided by the `factor`.
-- [ ]
-
 ### Version 0
 
 ⚠️ This project is still in development, so according to semver it is in version 0.
 This means that bumping of minor versions (the `x` in `0.x.y`) signifies breaking changes.
+
+While working in v0, the goal is to reach an abstraction to works and looks stable in order to release v1. Below is a
+TODO list of features I want to have when looking to create breaking changes towards v1:
+
+- [x] Support cobra an viper writing to a strcut with json tags
+- [ ] Multiple files with merge (e.g for supporting `myapp -c defaults.yaml -c production.yaml`)
+- [ ] `type Provider interface{...}` - an abstraction to capture providers of secrets and/or feature flags or anything custom
+- [ ] `Provider` should optionally support "watch mode", similar to how file watching works. The option to setup polling on the value should be generic and provided by the `factor`.
+- [ ] Users should not have to _manually_ set json tags on structs in order for things to work.
+- [ ] Refactor as many features from using `reflect` to code gen
 
 #### Version 0.2
 
