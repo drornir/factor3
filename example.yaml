@@ -1,0 +1,10 @@
+version: v0
+log:
+  level: debug
+  format: text
+github:
+  # token: "never-put-it-here"
+  app:
+    client_id: "put-it-here"
+    pem_file: "/path/to/pem/file"
+    installation_id: "1234567890"
