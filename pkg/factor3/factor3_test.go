@@ -98,7 +98,7 @@ github:
 			err := factor3.InitializeViper(factor3.InitArgs{
 				Viper:       viperInstance,
 				ProgramName: tc.name,
-				CfgFile:     tc.filename,
+				CfgFileName: tc.filename,
 			})
 			require.NoError(t, err, "factor3.InitializeViper() on %q", tc.filename)
 

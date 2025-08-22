@@ -38,7 +38,7 @@ func init() {
 	err := factor3.InitializeViper(factor3.InitArgs{
 		Viper:       viperInstance,
 		ProgramName: "myprogram",
-		CfgFile:     "tests/configs/config.json",
+		CfgFilePath: "tests/configs/config.json",
 	})
 	cobra.CheckErr(err)
 

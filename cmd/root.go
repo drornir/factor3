@@ -69,7 +69,7 @@ func initViper() {
 	if err := factor3.InitializeViper(factor3.InitArgs{
 		Viper:       viperInstance,
 		ProgramName: ProgramName,
-		CfgFile:     flagConfigFile,
+		CfgFileName: flagConfigFile,
 	}); err != nil {
 		cobra.CheckErr(fmt.Errorf("config.Initialize: %w", err))
 	}
@@ -95,7 +95,7 @@ func initViper() {
 }
 
 func initLogger() {
-	logOut := os.Stdout
+	logOut := os.Stderr
 
 	var sloggerHandler slog.Handler
 	sloggerOpts := &slog.HandlerOptions{

@@ -2,8 +2,6 @@ package factor3
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -56,12 +54,7 @@ func InitializeViper(a InitArgs) error {
 
 	// If a config file is found, read it in.
 	if err := a.Viper.ReadInConfig(); err != nil {
-		if !errors.Is(err, viper.ConfigFileNotFoundError{}) {
-			return fmt.Errorf("reading in config file using viper: %w", err)
-		}
-		// fmt.Fprintln(os.Stderr, err.Error())
-	} else {
-		// fmt.Fprintln(os.Stderr, "Read in config file:", a.Viper.ConfigFileUsed())
+		log.GG().W(context.Background(), "error reading config file", "err", err)
 	}
 
 	return nil
