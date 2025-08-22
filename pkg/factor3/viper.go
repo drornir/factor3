@@ -17,7 +17,8 @@ import (
 type InitArgs struct {
 	Viper       *viper.Viper
 	ProgramName string
-	CfgFile     string
+	CfgFilePath string
+	CfgFileName string
 }
 
 func InitializeViper(a InitArgs) error {
@@ -27,9 +28,14 @@ func InitializeViper(a InitArgs) error {
 	a.Viper.AutomaticEnv()
 	a.Viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-	if a.CfgFile != "" {
-		a.Viper.SetConfigFile(a.CfgFile)
+	if a.CfgFilePath != "" {
+		a.Viper.SetConfigFile(a.CfgFilePath)
 	} else {
+
+		if wd, err := os.Getwd(); err == nil {
+			a.Viper.AddConfigPath(wd)
+		}
+
 		configHome := os.Getenv("XDG_CONFIG_HOME")
 		if configHome == "" {
 			home, err := os.UserHomeDir()
@@ -38,11 +44,15 @@ func InitializeViper(a InitArgs) error {
 			}
 			configHome = filepath.Join(home, ".config", a.ProgramName)
 		}
+		if a.CfgFileName == "" {
+			a.CfgFileName = a.ProgramName
+		}
 
 		a.Viper.AddConfigPath(configHome)
-		a.Viper.SetConfigName("config")
-		a.Viper.WatchConfig()
+		a.Viper.SetConfigName(a.CfgFileName)
 	}
+
+	a.Viper.WatchConfig()
 
 	// If a config file is found, read it in.
 	if err := a.Viper.ReadInConfig(); err != nil {
